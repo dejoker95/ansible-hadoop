@@ -1,0 +1,89 @@
+---
+- name: Install Java 8
+  apt:
+    name: openjdk-8-jdk
+    state: present
+
+- name: Create zookeeper group
+  group:
+    name: '{{ zookeeper_group }}'
+    state: present
+    system: yes
+  tags:
+    - zookeeper_group
+
+- name: Create zookeeper user
+  user:
+    name: '{{ zookeeper_user }}'
+    group: '{{ zookeeper_group }}'
+    state: present
+    createhome: no
+    system: yes
+  tags:
+    - zookeeper_user
+
+- name: Extract zookeeper.tar.gz to install directory
+  unarchive:
+    src: '../files/{{ zookeeper_package }}'
+    dest: '{{ zookeeper_root_dir }}'
+    owner: '{{ zookeeper_user }}'
+    group: '{{ zookeeper_group }}'
+  tags:
+    - zookeeper_unpack
+
+- name: Create symbolic link to install directory
+  file:
+    src: '{{ zookeeper_install_dir }}'
+    dest: '{{ zookeeper_dir }}'
+    owner: '{{ zookeeper_user }}'
+    group: '{{ zookeeper_group }}'
+    state: link
+
+- name: Create Log & Data directory
+  file:
+    path: "{{ item['target'] }}"
+    owner: '{{ zookeeper_user }}'
+    group: '{{ zookeeper_group }}'
+    state: directory
+  loop:
+    - target: '{{ zookeeper_data_dir }}'
+    - target: '{{ zookeeper_log_dir }}'
+
+- name: Create zoo.cfg
+  template:
+    src: zoo.cfg.j2
+    dest: '{{ zookeeper_dir }}/conf/zoo.cfg'
+    owner: '{{ zookeeper_user }}'
+    group: '{{ zookeeper_group }}'
+
+- name: Create myid
+  template:
+    src: myid.j2
+    dest: '{{ zookeeper_data_dir }}/myid'
+    owner: '{{ zookeeper_user }}'
+    group: '{{ zookeeper_group }}'
+
+- name: Create /etc/default/zookeeper
+  template:
+    src: default.j2
+    dest: /etc/default/zookeeper
+    owner: '{{ zookeeper_user }}'
+    group: '{{ zookeeper_group }}'
+
+- name: Create zookeeper.service
+  template:
+    src: zookeeper.service.j2
+    dest: /usr/lib/systemd/system/zookeeper.service
+    owner: '{{ zookeeper_user }}'
+    group: '{{ zookeeper_group }}'
+
+- name: Reload systemd daemon
+  systemd_service:
+    daemon_reload: true
+
+- name: Start the zookeeper.service
+  systemd_service:
+    name: zookeeper.service
+    state: started
+    enabled: true
+

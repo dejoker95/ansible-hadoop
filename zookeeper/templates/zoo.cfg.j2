@@ -1,0 +1,13 @@
+tickTime={{ zookeeper_ticktime }}
+initLimit={{ zookeeper_init_limit }}
+syncLimit={{ zookeeper_sync_limit }}
+dataDir={{ zookeeper_data_dir }}
+clientPort={{ zookeeper_client_port }}
+maxClientCnxns={{ zookeeper_max_client_cnxns }}
+autopurge.purgeInterval={{ zookeeper_purge_interval }}
+4lw.commands.whitelist={{ zookeeper_command_whitelist }}
+admin.enableServer={{ zookeeper_enable_server | ternary('true', 'false') }}
+
+{% for host in zookeeper_servers %}
+server.{{ loop.index }}={{ hostvars[host]['inventory_hostname'] }}:{{ zookeeper_leader_port }}:{{ zookeeper_election_port }}
+{% endfor %}

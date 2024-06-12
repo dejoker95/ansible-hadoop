@@ -1,0 +1,6 @@
+---
+- hosts: zookeeper
+  tasks:
+    - name: Execute Zookeeper Role
+      ansible.builtin.import_role:
+        name: zookeeper
